@@ -40,21 +40,70 @@
     panel.querySelectorAll('[data-rating-id]').forEach(button => button.onclick = () => openRatingModal(movies.find(movie => String(movie.id) === button.dataset.ratingId)));
   }
 
-  function openRatingModal(movie) {
+  function ensureRatingModal() {
+    let backdrop = document.querySelector('#ratingModalBackdrop');
+    if (backdrop) return backdrop;
+    backdrop = document.createElement('div');
+    backdrop.id = 'ratingModalBackdrop';
+    backdrop.className = 'rating-modal-backdrop';
+    backdrop.innerHTML = '<article class="rating-modal" role="dialog" aria-modal="true"><button type="button" class="rating-modal-close" aria-label="Fechar">×</button><div id="ratingModalContent"></div></article>';
+    document.body.appendChild(backdrop);
+    backdrop.querySelector('.rating-modal-close').onclick = () => backdrop.classList.remove('open');
+    backdrop.onclick = event => { if (event.target === backdrop) backdrop.classList.remove('open'); };
+    return backdrop;
+  }
+
+  function saveMemberRating(movie, value, backdrop) {
+    movie.ratings = { ...(movie.ratings || {}), [currentMember()]: value };
+    const values = Object.values(movie.ratings).map(Number).filter(Number.isFinite);
+    movie.group = values.length ? (values.reduce((sum, rating) => sum + rating, 0) / values.length).toFixed(1) : '—';
+    window.__ratingMovieId = null;
+    window.__domingoMovies = movies;
+    save();
+    window.movieStore?.saveRating(movie.id, value);
+    backdrop.classList.remove('open');
+    renderAll();
+    toast('Sua avaliação foi salva');
+  }
+
+  function showRatingConfirmation(movie, value, backdrop) {
+    const content = backdrop.querySelector('#ratingModalContent');
+    content.innerHTML = `<p class="eyebrow">CONFIRMAR AVALIAÇÃO</p><h2>Está tudo certo?</h2><p class="rating-confirm-copy">Você está dando esta nota para <strong>${escapeDiscover(movie.title)}</strong>.</p><div class="rating-confirm-score"><span>${Number(value).toFixed(1).replace('.', ',')}</span><small>/ 10 · sua nota</small></div><div class="rating-modal-actions"><button type="button" class="outline-button" id="editRatingButton">voltar e corrigir</button><button type="button" class="primary-button" id="confirmRatingButton">confirmar nota</button></div>`;
+    content.querySelector('#editRatingButton').onclick = () => openRatingModal(movie, value);
+    content.querySelector('#confirmRatingButton').onclick = () => saveMemberRating(movie, value, backdrop);
+  }
+
+  function openRatingModal(movie, currentValue = '') {
     if (!movie) return;
     window.__ratingMovieId = movie.id;
     window.__editMovieId = null;
-    openModal(movie);
-    const field = document.querySelector(personField[currentMember()] || '#ratingYou');
-    document.querySelectorAll('.rating-fields input').forEach(input => { input.value = ''; input.disabled = input !== field; input.style.display = input === field ? '' : 'none'; });
-    field.value = movie.ratings?.[currentMember()] ?? '';
-    document.querySelector('#memberSelect').value = movie.member;
-    document.querySelector('#filmTitle').readOnly = true;
-    const helper = document.querySelector('.field-help'); if (helper) helper.textContent = 'Minha nota para este filme, de 0 a 10';
+    const backdrop = ensureRatingModal();
+    const content = backdrop.querySelector('#ratingModalContent');
+    content.innerHTML = `<p class="eyebrow">SUA AVALIAÇÃO</p><h2>${escapeDiscover(movie.title)}</h2><p class="modal-copy">Como foi este filme para você? Escolha uma nota de 0 a 10.</p><form id="ratingOnlyForm"><label for="ratingOnlyInput">Nota do ${escapeDiscover(currentMember())}<input id="ratingOnlyInput" type="number" min="0" max="10" step="0.1" value="${currentValue}" placeholder="0 a 10" required></label><div class="rating-modal-actions"><button type="button" class="outline-button" id="cancelRatingButton">cancelar</button><button type="submit" class="primary-button">continuar</button></div></form>`;
+    content.querySelector('#cancelRatingButton').onclick = () => backdrop.classList.remove('open');
+    content.querySelector('#ratingOnlyForm').onsubmit = event => { event.preventDefault(); const value = Number(content.querySelector('#ratingOnlyInput').value); if (!Number.isFinite(value) || value < 0 || value > 10) return toast('Informe uma nota entre 0 e 10'); showRatingConfirmation(movie, value, backdrop); };
+    backdrop.classList.add('open');
+    content.querySelector('#ratingOnlyInput').focus();
+  }
+
+  function renderHistoryCards() {
+    const table = document.querySelector('#historyTable');
+    if (!table) return;
+    const formatRating = value => Number.isFinite(Number(value)) ? Number(value).toFixed(1).replace('.', ',') : '—';
+    table.innerHTML = movies.map(movie => {
+      const hasMyRating = Number.isFinite(Number(movie.ratings?.[currentMember()]));
+      const canRate = movie.member !== currentMember() && !hasMyRating;
+      const ratings = members.map(person => { const value = movie.ratings?.[person.name]; return `<div class="history-member-rating ${Number.isFinite(Number(value)) ? 'rated' : 'pending'}"><span class="avatar ${person.cls}">${person.initial}</span><span><strong>${formatRating(value)}</strong><small>${person.name}</small></span></div>`; }).join('');
+      return `<tr class="history-card-row"><td colspan="6"><article class="history-card"><div class="history-card-top"><span class="history-date">${fmtDate(movie.date)}</span><span class="history-chooser">${member(movie.member).initial} ${escapeDiscover(movie.member)} escolheu</span></div><div class="history-card-main"><div class="history-film"><div class="table-film"><img class="table-poster" src="${poster(movie.poster)}" onerror="this.src='${poster()}'"><span>${escapeDiscover(movie.title)}<small class="td-muted">${escapeDiscover(movie.year || 'sem ano')}</small></span></div><p>${escapeDiscover(movie.overview || 'Sessão registrada pelo grupo.')}</p></div><div class="history-score-summary"><div><small>TMDB</small><strong>★ ${formatRating(movie.score)}</strong></div><div class="history-group-score"><small>MÉDIA DO GRUPO</small><strong>${formatRating(movie.group)}</strong></div></div></div><div class="history-card-bottom"><div class="history-member-ratings"><small class="history-section-label">NOTAS DA SALA</small><div class="history-rating-list">${ratings}</div></div><div class="history-actions"><button type="button" class="history-edit" data-history-edit="${movie.id}">editar</button>${canRate ? `<button type="button" class="rate-row" data-history-rate="${movie.id}">avaliar</button>` : `<span class="rating-status">${hasMyRating ? `sua nota: ${formatRating(movie.ratings?.[currentMember()])}` : 'filme escolhido por você'}</span>`}<button type="button" class="delete-row delete-action" data-id="${movie.id}">excluir</button></div></div></article></td></tr>`;
+    }).join('');
+    table.querySelectorAll('[data-history-rate]').forEach(button => button.onclick = () => openRatingModal(movies.find(movie => String(movie.id) === button.dataset.historyRate)));
+    table.querySelectorAll('[data-history-edit]').forEach(button => button.onclick = () => { const movie = movies.find(item => String(item.id) === button.dataset.historyEdit); if (!movie) return; window.__ratingMovieId = null; window.__editMovieId = movie.id; openModal(movie); document.querySelector('#filmTitle').readOnly = false; document.querySelector('#memberSelect').value = movie.member; document.querySelector('#filmDate').value = movie.date || ''; });
+    table.querySelectorAll('.delete-row').forEach(button => button.onclick = () => { movies = movies.filter(movie => String(movie.id) !== String(button.dataset.id)); save(); renderAll(); toast('Sessão removida do histórico'); });
   }
 
   function renderRatingChips() {
     document.querySelectorAll('#historyTable tr').forEach(row => {
+      if (row.classList.contains('history-card-row')) return;
       const titleNode = row.querySelector('.table-film span');
       const movie = movies.find(item => item.title === titleNode?.firstChild?.textContent.trim());
       const filmCell = row.querySelector('.table-film');
@@ -100,7 +149,7 @@
   const baseRanking = renderRanking;
   renderRanking = () => { baseRanking(); monthlyRanking(); };
   const baseHistory = renderHistory;
-  renderHistory = () => { baseHistory(); renderRatingChips(); };
+  renderHistory = () => { baseHistory(); renderHistoryCards(); };
 
   function decorateDiscoverImages() {
     document.querySelectorAll('.pick-poster,.news-poster,.discover-card-poster,.table-poster,.movie-thumb,.catalog-result-image').forEach(image => image.onerror = () => { image.onerror = null; image.src = image.classList.contains('person-result-image') ? fallbackProfile : fallbackPoster; });

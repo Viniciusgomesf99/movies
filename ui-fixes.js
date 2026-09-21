@@ -193,6 +193,7 @@
 
   function decorateHistoryActions() {
     document.querySelectorAll('#historyTable tr').forEach(row => {
+      if (row.classList.contains('history-card-row')) return;
       const cells = row.querySelectorAll('td');
       const titleNode = row.querySelector('.table-film span');
       const movie = movies.find(item => item.title === titleNode?.firstChild?.textContent.trim());
