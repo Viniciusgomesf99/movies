@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="auth.css" />
   <link rel="stylesheet" href="ui-fixes.css" />
   <link rel="stylesheet" href="ui-fixes-extra.css" />
+  <link rel="stylesheet" href="feature-fixes.css" />
 </head>
 <body>
   <section class="auth-screen" id="authScreen">
@@ -42,7 +43,7 @@
         <div class="page-heading"><div><p class="eyebrow">DOMINGO, 09 OUTUBRO 2024</p><h1>O próximo filme<br><em>começa aqui.</em></h1></div><button class="primary-button" id="quickAdd">＋ Registrar filme</button></div>
         <div class="hero-card"><div><span class="pill orange">PRÓXIMA VEZ</span><h2>Quem escolhe o<br>filme é <span id="heroChooser">Nefasto</span>.</h2><p>O sorteio acontece entre os membros que ainda não escolheram nesta semana.</p><button class="dark-button" data-go="roulette">Sortear agora <span>→</span></button></div><div class="hero-wheel"><div class="wheel-ring"><div class="wheel-label">RODA<br><strong>DA VEZ</strong></div></div><span class="spark s1">✦</span><span class="spark s2">✧</span></div></div>
         <div class="section-title"><div><h3>Este ciclo</h3><span>Domingos, filmes e boas histórias.</span></div><button class="text-button" data-go="history">ver histórico completo →</button></div>
-        <div class="stats-grid"><div class="stat-card accent"><span class="stat-label">FILMES ASSISTIDOS</span><strong id="totalMovies">08</strong><span class="stat-foot">desde agosto <b>↗ +2</b></span></div><div class="stat-card"><span class="stat-label">MÉDIA DO GRUPO</span><strong id="groupAverage">8,4</strong><span class="stat-foot">avaliação interna <b class="yellow">★</b></span></div><div class="stat-card"><span class="stat-label">PRÓXIMO ESCOLHEDOR</span><strong id="nextChooser">Nefasto</strong><span class="stat-foot">sorteio pendente <b>◎</b></span></div><div class="stat-card"><span class="stat-label">MEMBROS</span><strong>03</strong><span class="stat-foot">todos ativos <b class="green">●</b></span></div></div>
+        <div class="stats-grid"><div class="stat-card accent"><span class="stat-label">FILMES ASSISTIDOS</span><strong id="totalMovies">08</strong><span class="stat-foot">desde agosto <b>↗ +2</b></span></div><div class="stat-card"><span class="stat-label">MINHA MÉDIA NO MÊS</span><strong id="groupAverage">—</strong><span class="stat-foot">suas avaliações <b class="yellow">★</b></span></div><div class="stat-card"><span class="stat-label">PRÓXIMO ESCOLHEDOR</span><strong id="nextChooser">Nefasto</strong><span class="stat-foot">sorteio pendente <b>◎</b></span></div><div class="stat-card"><span class="stat-label">MEMBROS</span><strong>03</strong><span class="stat-foot">todos ativos <b class="green">●</b></span></div></div>
         <div class="content-grid"><div class="panel recent-panel"><div class="panel-heading"><div><h3>Últimas sessões</h3><span>Os filmes que já passaram pela nossa sala.</span></div><button class="round-button" data-go="history">→</button></div><div class="movie-list" id="recentList"></div></div><div class="panel members-panel"><div class="panel-heading"><div><h3>Nosso trio</h3><span>Escolhas por membro</span></div><span class="live-dot">● AO VIVO</span></div><div id="membersList"></div><button class="outline-button" id="openAddMember">＋ adicionar membro</button></div></div>
       </section>
 
@@ -117,5 +118,6 @@
     decorateRatingButtons();
   </script>
   <script src="ui-fixes.js"></script>
+  <script src="feature-fixes.js"></script>
 </body>
 </html>
