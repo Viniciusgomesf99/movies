@@ -9,6 +9,8 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="auth.css" />
+  <link rel="stylesheet" href="ui-fixes.css" />
+  <link rel="stylesheet" href="ui-fixes-extra.css" />
 </head>
 <body>
   <section class="auth-screen" id="authScreen">
@@ -114,5 +116,6 @@
     new MutationObserver(decorateRatingButtons).observe(document.querySelector('#historyTable'), { childList: true });
     decorateRatingButtons();
   </script>
+  <script src="ui-fixes.js"></script>
 </body>
 </html>
