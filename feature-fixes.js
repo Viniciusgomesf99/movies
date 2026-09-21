@@ -1,8 +1,7 @@
 (function () {
   const fallbackPoster = 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=300&q=80';
   const fallbackProfile = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=160&q=80';
-  const personField = { Pachenko: '#ratingYou', Nefasto: '#ratingNefasto', Shaco: '#ratingShaco' };
-  const currentMember = () => window.currentUser?.displayName || 'Pachenko';
+  const currentMember = () => { const user = window.currentUser || {}; const username = String(user.username || user.email || '').split('@')[0].toLowerCase(); const names = { pachenko: 'Pachenko', nefasto: 'Nefasto', shaco: 'Shaco' }; return user.displayName || names[username] || user.user_metadata?.display_name || 'Pachenko'; };
   const numericRatings = movie => Object.values(movie.ratings || {}).map(Number).filter(Number.isFinite);
   const filmRating = movie => { const values = numericRatings(movie); return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null; };
   const currentMonth = () => new Date().toISOString().slice(0, 7);
@@ -85,6 +84,7 @@
     backdrop.classList.add('open');
     content.querySelector('#ratingOnlyInput').focus();
   }
+  window.openRatingModal = openRatingModal;
 
   function renderHistoryCards() {
     const table = document.querySelector('#historyTable');
@@ -96,8 +96,10 @@
       const ratings = members.map(person => { const value = movie.ratings?.[person.name]; return `<div class="history-member-rating ${Number.isFinite(Number(value)) ? 'rated' : 'pending'}"><span class="avatar ${person.cls}">${person.initial}</span><span><strong>${formatRating(value)}</strong><small>${person.name}</small></span></div>`; }).join('');
       return `<tr class="history-card-row"><td colspan="6"><article class="history-card"><div class="history-card-top"><span class="history-date">${fmtDate(movie.date)}</span><span class="history-chooser">${member(movie.member).initial} ${escapeDiscover(movie.member)} escolheu</span></div><div class="history-card-main"><div class="history-film"><div class="table-film"><img class="table-poster" src="${poster(movie.poster)}" onerror="this.src='${poster()}'"><span>${escapeDiscover(movie.title)}<small class="td-muted">${escapeDiscover(movie.year || 'sem ano')}</small></span></div><p>${escapeDiscover(movie.overview || 'Sessão registrada pelo grupo.')}</p></div><div class="history-score-summary"><div><small>TMDB</small><strong>★ ${formatRating(movie.score)}</strong></div><div class="history-group-score"><small>MÉDIA DO GRUPO</small><strong>${formatRating(movie.group)}</strong></div></div></div><div class="history-card-bottom"><div class="history-member-ratings"><small class="history-section-label">NOTAS DA SALA</small><div class="history-rating-list">${ratings}</div></div><div class="history-actions"><button type="button" class="history-edit" data-history-edit="${movie.id}">editar</button>${canRate ? `<button type="button" class="rate-row" data-history-rate="${movie.id}">avaliar</button>` : `<span class="rating-status">${hasMyRating ? `sua nota: ${formatRating(movie.ratings?.[currentMember()])}` : 'filme escolhido por você'}</span>`}<button type="button" class="delete-row delete-action" data-id="${movie.id}">excluir</button></div></div></article></td></tr>`;
     }).join('');
+    table.querySelectorAll('.history-chooser').forEach((node, index) => { const movie = movies[index]; if (movie) node.textContent = `${movie.member} escolheu`; });
+    table.querySelectorAll('.history-card-row').forEach((row, index) => { const movie = movies[index]; const status = row.querySelector('.rating-status'); if (!movie || !status || !Number.isFinite(Number(movie.ratings?.[currentMember()]))) return; const editRating = document.createElement('button'); editRating.type = 'button'; editRating.className = 'rating-status'; editRating.dataset.historyRate = movie.id; editRating.textContent = `editar nota · ${formatRating(movie.ratings?.[currentMember()])}`; status.replaceWith(editRating); });
     table.querySelectorAll('[data-history-rate]').forEach(button => button.onclick = () => openRatingModal(movies.find(movie => String(movie.id) === button.dataset.historyRate)));
-    table.querySelectorAll('[data-history-edit]').forEach(button => button.onclick = () => { const movie = movies.find(item => String(item.id) === button.dataset.historyEdit); if (!movie) return; window.__ratingMovieId = null; window.__editMovieId = movie.id; openModal(movie); document.querySelector('#filmTitle').readOnly = false; document.querySelector('#memberSelect').value = movie.member; document.querySelector('#filmDate').value = movie.date || ''; });
+    table.querySelectorAll('[data-history-edit]').forEach(button => button.onclick = () => { const movie = movies.find(item => String(item.id) === button.dataset.historyEdit); if (!movie) return; window.__ratingMovieId = null; window.__editMovieId = movie.id; openModal(movie); document.querySelector('#filmTitle').readOnly = false; document.querySelector('#memberSelect').value = movie.member; document.querySelector('#memberDisplay').value = movie.member; document.querySelector('#filmDate').value = movie.date || ''; });
     table.querySelectorAll('.delete-row').forEach(button => button.onclick = () => { movies = movies.filter(movie => String(movie.id) !== String(button.dataset.id)); save(); renderAll(); toast('Sessão removida do histórico'); });
   }
 
@@ -411,7 +413,7 @@
   function showWinner(name) { let modal = document.querySelector('#winnerModal'); if (!modal) { modal = document.createElement('div'); modal.id = 'winnerModal'; modal.className = 'winner-modal'; modal.innerHTML = '<div class="winner-dialog"><button class="winner-close">×</button><span>✦</span><small>PRÓXIMO ESCOLHEDOR</small><h2></h2><p>Agora é só encontrar o filme da sessão.</p><button class="primary-button winner-ok">continuar</button></div>'; document.body.appendChild(modal); modal.querySelector('.winner-close').onclick = () => modal.classList.remove('open'); modal.querySelector('.winner-ok').onclick = () => modal.classList.remove('open'); } modal.querySelector('h2').textContent = name; modal.classList.add('open'); }
 
   const baseOpenModal = openModal;
-  openModal = film => { baseOpenModal(film); document.querySelectorAll('.rating-fields input').forEach(input => { input.value = ''; }); const field = document.querySelector(personField[currentMember()] || '#ratingYou'); if (field) { field.disabled = false; field.style.display = ''; } const helper = document.querySelector('.field-help'); if (helper) helper.textContent = 'Minha nota pro filme, de 0 a 10'; };
+  openModal = film => { baseOpenModal(film); const memberName = currentMember(); const memberInput = document.querySelector('#memberSelect'); const memberDisplay = document.querySelector('#memberDisplay'); if (memberInput) memberInput.value = film?.member || memberName; if (memberDisplay) memberDisplay.value = film?.member || memberName; const field = document.querySelector('#ratingYou'); if (field) { field.value = film?.ratings?.[memberName] ?? ''; field.disabled = false; field.style.display = ''; } const helper = document.querySelector('.field-help'); if (helper) helper.textContent = `Nota de ${memberName}, de 0 a 10`; };
   const refreshMemberPanels = () => { renderPendingRatings(); homeMonthlyScores(); monthlyRanking(); };
   document.addEventListener('auth:ready', () => { if (window.movieStore?.isRemote) showDataSkeleton(); else refreshMemberPanels(); loadInitialDiscover(); });
   window.addEventListener('movies:ready', () => { clearDataSkeleton(); refreshMemberPanels(); });
