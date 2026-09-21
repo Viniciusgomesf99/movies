@@ -1,3 +1,4 @@
 .edit-row,.delete-action{border:1px solid var(--line);background:transparent;color:#777;padding:5px 7px;border-radius:3px;font:500 9px 'DM Mono';cursor:pointer}.edit-row:hover,.delete-action:hover{background:#e6e3dc;color:var(--ink)}
 .next-session strong{text-transform:none}
 .empty-podium{align-self:center;text-align:center;color:var(--muted);padding:30px}.empty-podium strong{display:block;color:var(--ink);font-size:14px;margin-bottom:6px}.empty-podium small{font-size:10px}
+.roulette-result.empty-result{background:#f1dfbd;border-color:#e5c889}.roulette-result.empty-result .result-icon{color:#b48236}

@@ -13,12 +13,14 @@
       const { data, error } = await client.from('movies').select('*').order('date', { ascending: false });
       if (error) { console.warn('Supabase load:', error.message); return []; }
       const { data: ratingRows } = await client.from('movie_ratings').select('movie_id,user_id,rating');
-      const { data: profiles } = await client.from('profiles').select('id,username');
-      const usernames = Object.fromEntries((profiles || []).map(profile => [profile.id, profile.username]));
+        const { data: profiles } = await client.from('profiles').select('id,username,display_name');
+      const displayNames = { nefasto: 'Nefasto', shaco: 'Shaco', pachenko: 'Pachenko' };
+      const usernames = Object.fromEntries((profiles || []).map(profile => [profile.id, displayNames[String(profile.username || '').toLowerCase()] || profile.display_name || profile.username]));
+      const normalizeRatings = source => Object.fromEntries(Object.entries(source || {}).map(([name, value]) => [displayNames[String(name).toLowerCase()] || name, value]));
       const ratingsByMovie = {};
       (ratingRows || []).forEach(row => { (ratingsByMovie[row.movie_id] ||= {})[usernames[row.user_id] || row.user_id] = row.rating; });
       return (data || []).map(row => {
-        const ratings = Object.keys(ratingsByMovie[row.id] || {}).length ? ratingsByMovie[row.id] : (row.ratings || {});
+        const ratings = { ...normalizeRatings(row.ratings), ...(ratingsByMovie[row.id] || {}) };
         const values = Object.values(ratings).map(Number).filter(Number.isFinite);
         return { ...row, ratings, group: values.length ? (values.reduce((a, value) => a + value, 0) / values.length).toFixed(1) : row.group_score };
       });

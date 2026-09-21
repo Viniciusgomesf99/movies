@@ -89,20 +89,50 @@
   const baseDiscover = renderDiscover;
   renderDiscover = list => { baseDiscover(list); decorateDiscoverImages(); };
 
+  let initialDiscoverLoaded = false;
+  let initialDiscoverLoading = false;
+  let initialDiscoverRetries = 0;
+  async function loadInitialDiscover() {
+    if (initialDiscoverLoaded || initialDiscoverLoading || !apiKey) return;
+    initialDiscoverLoading = true;
+    const featured = document.querySelector('#featuredMovie');
+    if (featured) featured.classList.add('tmdb-loading');
+    try {
+      const response = await fetch(`https://api.themoviedb.org/3/movie/top_rated?api_key=${apiKey}&language=pt-BR&page=1`);
+      if (!response.ok) throw new Error('TMDB request failed');
+      const data = await response.json();
+      const list = (data.results || []).filter(movie => movie.poster_path).slice(0, 12).map(movie => ({ id: movie.id, title: movie.title, year: movie.release_date?.slice(0, 4) || '', score: Number(movie.vote_average || 0).toFixed(1), group: '—', poster: `https://image.tmdb.org/t/p/w200${movie.poster_path}`, backdrop: movie.backdrop_path ? `https://image.tmdb.org/t/p/w780${movie.backdrop_path}` : '', overview: movie.overview || 'Sem descrição disponível.' }));
+      if (list.length) { renderDiscover(list); initialDiscoverLoaded = true; }
+    } catch (error) {
+      console.warn('TMDB initial discovery:', error.message);
+      if (initialDiscoverRetries < 2 && window.currentUser) { initialDiscoverRetries += 1; setTimeout(loadInitialDiscover, 1500); }
+    } finally {
+      initialDiscoverLoading = false;
+      if (featured) featured.classList.remove('tmdb-loading');
+    }
+  }
+
   async function catalogSearch(query) {
     if (!apiKey || !query) return { suggestions: [], movies: [] };
     try {
-      const response = await fetch(`https://api.themoviedb.org/3/search/multi?api_key=${apiKey}&language=pt-BR&include_adult=false&query=${encodeURIComponent(query)}`);
-      const data = await response.json(); const suggestions = data.results || [];
-      const movieResults = suggestions.filter(item => item.media_type === 'movie').map(item => ({ id: item.id, title: item.title, year: item.release_date?.slice(0, 4) || '', score: Number(item.vote_average || 0).toFixed(1), poster: item.poster_path ? `https://image.tmdb.org/t/p/w200${item.poster_path}` : '', backdrop: item.backdrop_path ? `https://image.tmdb.org/t/p/w780${item.backdrop_path}` : '', overview: item.overview || 'Sem descrição disponível.' }));
-      return { suggestions, movies: movieResults };
+      const params = `api_key=${apiKey}&language=pt-BR&include_adult=false&query=${encodeURIComponent(query)}`;
+      const [peopleResponse, moviesResponse] = await Promise.all([
+        fetch(`https://api.themoviedb.org/3/search/person?${params}`),
+        fetch(`https://api.themoviedb.org/3/search/movie?${params}`)
+      ]);
+      if (!peopleResponse.ok || !moviesResponse.ok) throw new Error('TMDB search failed');
+      const [peopleData, moviesData] = await Promise.all([peopleResponse.json(), moviesResponse.json()]);
+      const personResults = (peopleData.results || []).sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
+      const movieResultsClean = (moviesData.results || []).filter(item => item.poster_path).map(item => ({ id: item.id, title: item.title, year: item.release_date?.slice(0, 4) || '', score: Number(item.vote_average || 0).toFixed(1), poster: `https://image.tmdb.org/t/p/w200${item.poster_path}`, backdrop: item.backdrop_path ? `https://image.tmdb.org/t/p/w780${item.backdrop_path}` : '', overview: item.overview || 'Sem descricao disponivel.' }));
+      const combinedSuggestions = [...personResults.map(item => ({ ...item, media_type: 'person' })), ...movieResultsClean.map(item => ({ ...item, media_type: 'movie' }))];
+      return { suggestions: combinedSuggestions, people: personResults, movies: movieResultsClean };
     } catch { return { suggestions: [], movies: [] }; }
   }
 
   async function personMovies(personId) {
     try {
-      const response = await fetch(`https://api.themoviedb.org/3/person/${personId}/combined_credits?api_key=${apiKey}&language=pt-BR`); const data = await response.json();
-      return (data.cast || []).filter(item => item.media_type === 'movie').sort((a, b) => (b.popularity || 0) - (a.popularity || 0)).slice(0, 12).map(item => ({ id: item.id, title: item.title, year: item.release_date?.slice(0, 4) || '', score: Number(item.vote_average || 0).toFixed(1), poster: item.poster_path ? `https://image.tmdb.org/t/p/w200${item.poster_path}` : '', backdrop: item.backdrop_path ? `https://image.tmdb.org/t/p/w780${item.backdrop_path}` : '', overview: item.overview || 'Sem descrição disponível.' }));
+      const creditsResponse = await fetch(`https://api.themoviedb.org/3/person/${personId}/movie_credits?api_key=${apiKey}&language=pt-BR`); const creditsData = await creditsResponse.json();
+      return (creditsData.cast || []).filter(item => item.poster_path).sort((a, b) => (b.popularity || 0) - (a.popularity || 0)).slice(0, 12).map(item => ({ id: item.id, title: item.title, year: item.release_date?.slice(0, 4) || '', score: Number(item.vote_average || 0).toFixed(1), poster: `https://image.tmdb.org/t/p/w200${item.poster_path}`, backdrop: item.backdrop_path ? `https://image.tmdb.org/t/p/w780${item.backdrop_path}` : '', overview: item.overview || 'Sem descrição disponível.' }));
     } catch { return []; }
   }
 
@@ -113,31 +143,39 @@
     let timer;
     const fillAutocomplete = async () => {
       const query = searchInput.value.trim(); clearTimeout(timer); if (query.length < 2) { menu.innerHTML = ''; return; }
-      timer = setTimeout(async () => { const data = await catalogSearch(query); menu.innerHTML = data.suggestions.slice(0, 6).map(item => item.media_type === 'person' ? `<button type="button" data-person="${item.id}"><b>ator</b> ${item.name}</button>` : `<button type="button" data-movie="${item.id}"><b>filme</b> ${item.title}</button>`).join(''); menu.querySelectorAll('[data-person]').forEach(button => button.onclick = async () => { const list = await personMovies(button.dataset.person); renderDiscover(list.length ? list : picks); menu.innerHTML = ''; }); menu.querySelectorAll('[data-movie]').forEach(button => button.onclick = () => { const movie = data.movies.find(item => String(item.id) === button.dataset.movie); if (movie) renderDiscover([movie, ...data.movies.filter(item => item.id !== movie.id)]); menu.innerHTML = ''; }); }, 300);
+      timer = setTimeout(async () => { const data = await catalogSearch(query); const suggestions = data.suggestions.filter(item => item.media_type === 'person' || (item.media_type === 'movie' && item.poster_path)); menu.innerHTML = suggestions.slice(0, 6).map(item => item.media_type === 'person' ? `<button type="button" data-person="${item.id}"><b>ator</b> ${item.name}</button>` : `<button type="button" data-movie="${item.id}"><b>filme</b> ${item.title}</button>`).join(''); menu.querySelectorAll('[data-person]').forEach(button => button.onclick = async () => { const list = await personMovies(button.dataset.person); renderDiscover(list.length ? list : picks); menu.innerHTML = ''; }); menu.querySelectorAll('[data-movie]').forEach(button => button.onclick = () => { const movie = data.movies.find(item => String(item.id) === button.dataset.movie); if (movie) renderDiscover([movie, ...data.movies.filter(item => item.id !== movie.id)]); menu.innerHTML = ''; }); }, 300);
     };
     searchInput.addEventListener('input', fillAutocomplete);
-    searchButton.onclick = async () => { const data = await catalogSearch(searchInput.value.trim()); renderDiscover(data.movies.length ? data.movies : picks); menu.innerHTML = ''; if (!data.movies.length) toast('Nenhum filme encontrado'); };
+    searchButton.onclick = async () => { const data = await catalogSearch(searchInput.value.trim()); if (data.people?.length) { const credits = await personMovies(data.people[0].id); renderDiscover(credits.length ? credits : data.movies.length ? data.movies : picks); } else renderDiscover(data.movies.length ? data.movies : picks); menu.innerHTML = ''; if (!data.people?.length && !data.movies.length) toast('Nenhum filme encontrado'); };
   }
 
   function syncWheel() {
     const wheel = document.querySelector('#rouletteWheel'); if (!wheel) return;
     const available = members.filter(person => !chosenThisWeek.includes(person.name));
-    wheel.innerHTML = available.length ? available.map(person => `<span>${person.name}</span>`).join('') : '<span>sem membros</span>';
+    const colors = ['#f8c084', '#ee9650', '#f9d39e', '#e9ad70'];
+    wheel.innerHTML = available.length ? available.map(person => `<span class="wheel-name">${person.name}</span>`).join('') : '<span class="wheel-name">sem membros</span>';
+    const amount = Math.max(available.length, 1);
+    wheel.style.background = `conic-gradient(from -90deg, ${available.map((_, index) => `${colors[index % colors.length]} ${index * 100 / amount}% ${(index + 1) * 100 / amount}%`).join(', ') || '#eceae5 0 100%'})`;
+    wheel.querySelectorAll('.wheel-name').forEach((label, index) => { const angle = (-90 + ((index + .5) * 360 / amount)) * Math.PI / 180; label.style.right = 'auto'; label.style.bottom = 'auto'; label.style.left = `${50 + Math.cos(angle) * 32}%`; label.style.top = `${50 + Math.sin(angle) * 32}%`; });
   }
   syncWheel();
+  const baseRouletteRender = renderRoulette;
+  renderRoulette = () => { baseRouletteRender(); syncWheel(); };
   const eligible = document.querySelector('#eligibleList'); if (eligible) new MutationObserver(syncWheel).observe(eligible, { childList: true });
   let modalSpinning = false;
   const spin = document.querySelector('#spinButton');
   if (spin) spin.onclick = () => {
     if (modalSpinning) return; const available = members.filter(person => !chosenThisWeek.includes(person.name)); if (!available.length) { toast('Inclua pelo menos um membro na roleta'); return; }
     modalSpinning = true; const wheel = document.querySelector('#rouletteWheel'); const winner = available[Math.floor(Math.random() * available.length)]; wheel.classList.add('spinning');
-    setTimeout(() => { wheel.classList.remove('spinning'); modalSpinning = false; document.querySelector('#rouletteResult').innerHTML = `<span class="result-icon">✦</span><div><small>RESULTADO DO SORTEIO</small><h3>${winner.name} escolhe o próximo filme.</h3></div>`; showWinner(winner.name); }, 1500);
+    setTimeout(() => { wheel.classList.remove('spinning'); modalSpinning = false; window.rouletteController?.setWinner(winner.name); document.querySelector('#rouletteResult').innerHTML = `<span class="result-icon">✦</span><div><small>RESULTADO DO SORTEIO</small><h3>${winner.name} escolhe o próximo filme.</h3></div>`; showWinner(winner.name); }, 1500);
   };
   function showWinner(name) { let modal = document.querySelector('#winnerModal'); if (!modal) { modal = document.createElement('div'); modal.id = 'winnerModal'; modal.className = 'winner-modal'; modal.innerHTML = '<div class="winner-dialog"><button class="winner-close">×</button><span>✦</span><small>PRÓXIMO ESCOLHEDOR</small><h2></h2><p>Agora é só encontrar o filme da sessão.</p><button class="primary-button winner-ok">continuar</button></div>'; document.body.appendChild(modal); modal.querySelector('.winner-close').onclick = () => modal.classList.remove('open'); modal.querySelector('.winner-ok').onclick = () => modal.classList.remove('open'); } modal.querySelector('h2').textContent = name; modal.classList.add('open'); }
 
   const baseOpenModal = openModal;
   openModal = film => { baseOpenModal(film); document.querySelectorAll('.rating-fields input').forEach(input => { input.value = ''; }); const field = document.querySelector(personField[currentMember()] || '#ratingYou'); if (field) { field.disabled = false; field.style.display = ''; } const helper = document.querySelector('.field-help'); if (helper) helper.textContent = 'Minha nota pro filme, de 0 a 10'; };
-  document.addEventListener('auth:ready', () => { renderPendingRatings(); homeMonthlyScores(); monthlyRanking(); });
+  document.addEventListener('auth:ready', () => { renderPendingRatings(); homeMonthlyScores(); monthlyRanking(); loadInitialDiscover(); });
+  if (window.currentUser) loadInitialDiscover();
+  window.addEventListener('load', () => { if (window.currentUser) loadInitialDiscover(); });
   const table = document.querySelector('#historyTable'); if (table) new MutationObserver(renderRatingChips).observe(table, { childList: true });
   renderRatingChips();
 })();

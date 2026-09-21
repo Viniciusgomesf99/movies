@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="ui-fixes.css" />
   <link rel="stylesheet" href="ui-fixes-extra.css" />
   <link rel="stylesheet" href="feature-fixes.css" />
+  <link rel="stylesheet" href="feature-fixes-extra.css" />
 </head>
 <body>
   <section class="auth-screen" id="authScreen">
@@ -71,12 +72,6 @@
     renderAll();
     const localSave = save;
     save = () => { window.__domingoMovies = movies; localSave(); window.movieStore.saveMovies(movies); };
-    window.movieStore.loadMovies().then(remoteMovies => {
-      if (window.movieStore.isRemote) {
-        movies = remoteMovies.map(m => ({ ...m, group: m.group ?? m.group_score ?? '—' }));
-        renderAll();
-      }
-    });
     window.addEventListener('auth:ready', () => {
       const profile = document.querySelector('.profile');
       if (profile && window.currentUser) profile.innerHTML = `<div class="avatar ${window.currentUser.avatarClass}">${window.currentUser.initial}</div><div><strong>${window.currentUser.displayName}</strong><small>membro ativo</small></div><button class="logout-button" id="logoutButton">sair</button>`;

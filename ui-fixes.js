@@ -1,12 +1,12 @@
 (function () {
   const rouletteKey = 'domingoRouletteState';
-  const readRoulette = () => { try { return JSON.parse(localStorage.getItem(rouletteKey) || '{"excluded":[]}'); } catch { return { excluded: [] }; } };
+  const readRoulette = () => { try { const value = JSON.parse(localStorage.getItem(rouletteKey) || '{"excluded":[]}'); return { excluded: Array.isArray(value.excluded) ? value.excluded : [], selected: value.selected || null }; } catch { return { excluded: [], selected: null }; } };
   let rouletteState = readRoulette();
   let selectedTMDBMovie = null;
   let searchTimer;
   let spinning = false;
 
-  chosenThisWeek = rouletteState.excluded || [];
+  chosenThisWeek = rouletteState.excluded;
   renderRoulette();
 
   function updateNextSession() {
@@ -27,10 +27,41 @@
   }
   updateNextSession();
 
+  function syncChooserState() {
+    const selected = members.some(person => person.name === rouletteState.selected) ? rouletteState.selected : null;
+    const label = selected || 'Ningu\u00e9m definido';
+    document.querySelectorAll('#nextChooser, #heroChooser').forEach(node => { node.textContent = label; });
+    const result = document.querySelector('#rouletteResult');
+    if (!result) return;
+    result.classList.toggle('empty-result', !selected);
+    result.classList.remove('result-pending');
+    result.innerHTML = selected
+      ? `<span class="result-icon">âœ¦</span><div><small>RESULTADO DO SORTEIO</small><h3>${selected} escolhe o pr\u00f3ximo filme.</h3></div>`
+      : '<span class="result-icon">â—Ž</span><div><small>RESULTADO DO SORTEIO</small><h3>Nenhum sorteio definido.</h3></div>';
+  }
+
+  const baseOverview = renderOverview;
+  renderOverview = () => { baseOverview(); syncChooserState(); };
+  syncChooserState();
+  const rawSyncChooserState = syncChooserState;
+  syncChooserState = () => {
+    rawSyncChooserState();
+    const icon = document.querySelector('#rouletteResult .result-icon');
+    if (icon) icon.textContent = rouletteState.selected ? '\u2726' : '\u25cb';
+  };
+  syncChooserState();
+
   function saveRoulette() {
     rouletteState.excluded = [...new Set(chosenThisWeek)];
+    rouletteState.selected = members.some(person => person.name === rouletteState.selected) ? rouletteState.selected : null;
     localStorage.setItem(rouletteKey, JSON.stringify(rouletteState));
+    syncChooserState();
   }
+
+  window.rouletteController = {
+    setWinner(name) { rouletteState.selected = name; saveRoulette(); },
+    clearWinner() { rouletteState.selected = null; saveRoulette(); }
+  };
 
   function addRouletteControls() {
     const panel = document.querySelector('.eligible-panel .panel-heading');
@@ -39,7 +70,7 @@
       button.id = 'resetRoulette';
       button.className = 'reset-roulette';
       button.textContent = 'resetar';
-      button.onclick = () => { chosenThisWeek = []; rouletteState = { excluded: [] }; saveRoulette(); renderAll(); toast('Roleta resetada para uma nova semana'); };
+      button.onclick = () => { chosenThisWeek = []; rouletteState = { excluded: [], selected: null }; saveRoulette(); renderAll(); toast('Roleta resetada: nenhum sorteio definido'); };
       panel.appendChild(button);
     }
   }
@@ -77,6 +108,8 @@
     setTimeout(() => {
       wheel.classList.remove('spinning');
       result.classList.remove('result-pending');
+      rouletteState.selected = winner.name;
+      saveRoulette();
       result.innerHTML = `<span class="result-icon">✦</span><div><small>RESULTADO DO SORTEIO</small><h3>${winner.name} escolhe o próximo filme.</h3></div>`;
       spinning = false;
     }, 1500);
@@ -155,6 +188,7 @@
     if (selected) { save(); renderAll(); }
     const chosen = document.querySelector('#memberSelect')?.value;
     if (chosen && !chosenThisWeek.includes(chosen)) { chosenThisWeek = [...chosenThisWeek, chosen]; saveRoulette(); renderRoulette(); }
+    if (chosen && chosen === rouletteState.selected) { rouletteState.selected = null; saveRoulette(); }
   };
 
   function decorateHistoryActions() {
