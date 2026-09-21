@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Plano de Domingo — Clube de Filmes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="auth.css" />
+</head>
+<body>
+  <section class="auth-screen" id="authScreen">
+    <div class="auth-art"><div class="auth-orbit orbit-one"></div><div class="auth-orbit orbit-two"></div><span class="auth-mark">P</span><p>DOMINGO<br><em>é dia de filme.</em></p></div>
+    <div class="auth-card"><div class="brand auth-brand"><span class="brand-mark">P</span><div><strong>Plano de Domingo</strong><small>clube de filmes</small></div></div><p class="eyebrow">ÁREA DO CLUBE</p><h1>Entre na<br><em>sessão.</em></h1><p class="auth-copy">Acompanhe as escolhas, participe da roleta e deixe sua nota para o próximo filme.</p><form id="loginForm"><label>Usuário<input id="loginUsername" autocomplete="username" required placeholder="nefasto" /></label><label>Senha<input id="loginPassword" type="password" autocomplete="current-password" required placeholder="••••••••" /></label><button class="primary-button auth-submit" type="submit">entrar no clube <span>→</span></button><p class="auth-error" id="authError"></p></form><small class="auth-foot">Acesso restrito aos membros do Plano de Domingo.</small></div>
+  </section>
+  <div class="app-shell" id="appShell" hidden>
+    <aside class="sidebar">
+      <div class="brand"><span class="brand-mark">P</span><div><strong>Plano de Domingo</strong><small>clube de filmes</small></div></div>
+      <div class="week-label">SEMANA 36 <span>●</span></div>
+      <nav class="nav">
+        <button class="nav-item active" data-view="overview"><span class="nav-icon">⌂</span> Visão geral</button>
+        <button class="nav-item" data-view="roulette"><span class="nav-icon">◎</span> Roleta</button>
+        <button class="nav-item" data-view="discover"><span class="nav-icon">✦</span> Descobrir filmes</button>
+        <button class="nav-item" data-view="history"><span class="nav-icon">◷</span> Histórico</button>
+        <button class="nav-item" data-view="ranking"><span class="nav-icon">♜</span> Ranking</button>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="next-session"><small>PRÓXIMA SESSÃO</small><strong>Domingo, 13 out</strong><span>faltam 4 dias</span></div>
+        <button class="settings-link" id="openSettings"><span>⚙</span> Configurações</button>
+        <div class="profile"><div class="avatar user-avatar">P</div><div><strong>Pachenko</strong><small>membro ativo</small></div><span class="more">···</span></div>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar"><div class="breadcrumb">CLUBE / <span id="pageLabel">VISÃO GERAL</span></div><div class="top-actions"><span class="sync-dot">● sincronizado</span><button class="icon-button" aria-label="notificações">♧<i></i></button><button class="avatar user-avatar">V</button></div></header>
+
+      <section id="view-overview" class="view active-view">
+        <div class="page-heading"><div><p class="eyebrow">DOMINGO, 09 OUTUBRO 2024</p><h1>O próximo filme<br><em>começa aqui.</em></h1></div><button class="primary-button" id="quickAdd">＋ Registrar filme</button></div>
+        <div class="hero-card"><div><span class="pill orange">PRÓXIMA VEZ</span><h2>Quem escolhe o<br>filme é <span id="heroChooser">Nefasto</span>.</h2><p>O sorteio acontece entre os membros que ainda não escolheram nesta semana.</p><button class="dark-button" data-go="roulette">Sortear agora <span>→</span></button></div><div class="hero-wheel"><div class="wheel-ring"><div class="wheel-label">RODA<br><strong>DA VEZ</strong></div></div><span class="spark s1">✦</span><span class="spark s2">✧</span></div></div>
+        <div class="section-title"><div><h3>Este ciclo</h3><span>Domingos, filmes e boas histórias.</span></div><button class="text-button" data-go="history">ver histórico completo →</button></div>
+        <div class="stats-grid"><div class="stat-card accent"><span class="stat-label">FILMES ASSISTIDOS</span><strong id="totalMovies">08</strong><span class="stat-foot">desde agosto <b>↗ +2</b></span></div><div class="stat-card"><span class="stat-label">MÉDIA DO GRUPO</span><strong id="groupAverage">8,4</strong><span class="stat-foot">avaliação interna <b class="yellow">★</b></span></div><div class="stat-card"><span class="stat-label">PRÓXIMO ESCOLHEDOR</span><strong id="nextChooser">Nefasto</strong><span class="stat-foot">sorteio pendente <b>◎</b></span></div><div class="stat-card"><span class="stat-label">MEMBROS</span><strong>03</strong><span class="stat-foot">todos ativos <b class="green">●</b></span></div></div>
+        <div class="content-grid"><div class="panel recent-panel"><div class="panel-heading"><div><h3>Últimas sessões</h3><span>Os filmes que já passaram pela nossa sala.</span></div><button class="round-button" data-go="history">→</button></div><div class="movie-list" id="recentList"></div></div><div class="panel members-panel"><div class="panel-heading"><div><h3>Nosso trio</h3><span>Escolhas por membro</span></div><span class="live-dot">● AO VIVO</span></div><div id="membersList"></div><button class="outline-button" id="openAddMember">＋ adicionar membro</button></div></div>
+      </section>
+
+      <section id="view-roulette" class="view"><div class="page-heading"><div><p class="eyebrow">SORTEIO DA SEMANA</p><h1>Quem escolhe<br><em>desta vez?</em></h1></div><div class="week-chip">DOMINGO 13 OUT <span>●</span></div></div><div class="roulette-layout"><div class="roulette-card"><div class="roulette-stage"><div class="pointer">▼</div><div class="roulette-wheel" id="rouletteWheel"><span>Nefasto</span><span>Pachenko</span><span>Shaco</span></div><div class="wheel-center">P</div></div><button class="dark-button spin-button" id="spinButton">Girar roleta <span>↻</span></button><p class="roulette-hint">Você pode remover quem já escolheu nesta semana.</p></div><div class="panel eligible-panel"><div class="panel-heading"><div><h3>Participantes</h3><span>Quem está elegível no sorteio?</span></div></div><div id="eligibleList"></div><div class="rule-note"><span>i</span><p>Ao registrar um filme, o membro é automaticamente removido deste ciclo.</p></div></div></div><div class="panel roulette-result" id="rouletteResult"><span class="result-icon">✦</span><div><small>RESULTADO DO SORTEIO</small><h3>A roleta está esperando.</h3></div></div></section>
+
+      <section id="view-discover" class="view"><div class="page-heading"><div><p class="eyebrow">CURADORIA TMDB</p><h1>Encontre o filme<br><em>da próxima sessão.</em></h1></div><button class="primary-button" id="randomMovie">✦ gerar sugestão</button></div><div class="discover-controls"><div class="topic-tabs"><button class="topic active" data-topic="classic">Clássicos · IMDb top 100</button><button class="topic" data-topic="popular">Mais populares</button><button class="topic" data-topic="scifi">Ficção científica</button><button class="topic" data-topic="thriller">Suspense</button></div><div class="search-box"><span>⌕</span><input id="movieSearch" placeholder="Buscar filme no TMDB..." /><button id="searchMovie">buscar</button></div></div><div class="discover-grid"><div class="featured-movie" id="featuredMovie"></div><div class="panel picks-panel"><div class="panel-heading"><div><h3>Mais sugestões</h3><span>Escolhas para assistir hoje.</span></div><button class="round-button" id="morePicks">↻</button></div><div id="suggestionList"></div></div></div></section>
+
+      <section id="view-history" class="view"><div class="page-heading"><div><p class="eyebrow">MEMÓRIA DO GRUPO</p><h1>Cada domingo<br><em>tem uma história.</em></h1></div><button class="primary-button" id="historyAdd">＋ registrar sessão</button></div><div class="history-toolbar"><span id="historyCount">8 filmes registrados</span><div><button class="filter-button active">todos</button><button class="filter-button">2024</button><button class="filter-button">2023</button></div></div><div class="panel table-panel"><table><thead><tr><th>FILME</th><th>ESCOLHIDO POR</th><th>DATA</th><th>TMDB</th><th>GRUPO</th><th></th></tr></thead><tbody id="historyTable"></tbody></table></div></section>
+
+      <section id="view-ranking" class="view"><div class="page-heading"><div><p class="eyebrow">PLACAR DO CLUBE</p><h1>O gosto é<br><em>subjetivo. O placar, nem tanto.</em></h1></div><div class="rank-toggle"><button class="active">por nota média</button><button>por escolhas</button></div></div><div class="ranking-hero"><div class="podium podium-second"><span class="rank-number">02</span><div class="avatar avatar-shaco">S</div><strong>Shaco</strong><small>média 8,2</small></div><div class="podium podium-first"><span class="crown">♛</span><span class="rank-number">01</span><div class="avatar avatar-nefasto">N</div><strong>Nefasto</strong><small>média 8,8</small></div><div class="podium podium-third"><span class="rank-number">03</span><div class="avatar user-avatar">P</div><strong>Pachenko</strong><small>média 7,9</small></div></div><div class="panel ranking-table"><div class="panel-heading"><div><h3>Desempenho dos membros</h3><span>Combinando nota TMDB e avaliação da nossa sala.</span></div><span class="pill muted">ATUALIZADO HOJE</span></div><div id="rankingList"></div></div></section>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="modalBackdrop"><div class="modal" id="sessionModal"><button class="modal-close" id="closeModal">×</button><p class="eyebrow">NOVA SESSÃO</p><h2>Registrar filme assistido</h2><p class="modal-copy">Anexe o membro, o filme e a data para manter a história do clube em dia.</p><form id="sessionForm"><label>Membro que escolheu<select id="memberSelect" required></select></label><label>Filme<input id="filmTitle" required placeholder="Ex.: O Poderoso Chefão" /></label><label>Data da sessão<input type="date" id="filmDate" required /></label><label>Nota TMDB <input type="number" id="tmdbScore" min="0" max="10" step="0.1" value="8.0" /></label><label>Sua nota <small class="field-help">Apenas sua avaliação é editável neste login</small><div class="rating-fields"><input type="number" id="ratingYou" min="0" max="10" step="0.1" placeholder="Pachenko" /><input type="number" id="ratingNefasto" min="0" max="10" step="0.1" placeholder="Nefasto" /><input type="number" id="ratingShaco" min="0" max="10" step="0.1" placeholder="Shaco" /></div></label><div class="modal-actions"><button type="button" class="outline-button" id="cancelModal">cancelar</button><button class="primary-button" type="submit">salvar sessão</button></div></form></div></div>
+  <div class="modal-backdrop" id="settingsBackdrop"><div class="modal small-modal"><button class="modal-close" id="closeSettings">×</button><p class="eyebrow">CONFIGURAÇÕES</p><h2>Conectar ao TMDB</h2><p class="modal-copy">A chave fica salva apenas neste navegador. Crie uma chave v3 em themoviedb.org.</p><form id="settingsForm"><label>TMDB API key<input type="password" id="apiKey" placeholder="Cole sua chave aqui" /></label><div class="modal-actions"><button type="button" class="outline-button" id="clearKey">usar modo demo</button><button class="primary-button" type="submit">salvar chave</button></div></form></div></div>
+  <div class="toast" id="toast"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script src="supabase-store.js"></script>
+  <script src="auth.js"></script>
+  <script src="app.js"></script>
+  <script>
+    movies.forEach(movie => { if (movie.member === 'Você') movie.member = 'Pachenko'; });
+    renderAll();
+    const localSave = save;
+    save = () => { window.__domingoMovies = movies; localSave(); window.movieStore.saveMovies(movies); };
+    window.movieStore.loadMovies().then(remoteMovies => {
+      if (window.movieStore.isRemote) {
+        movies = remoteMovies.map(m => ({ ...m, group: m.group ?? m.group_score ?? '—' }));
+        renderAll();
+      }
+    });
+    window.addEventListener('auth:ready', () => {
+      const profile = document.querySelector('.profile');
+      if (profile && window.currentUser) profile.innerHTML = `<div class="avatar ${window.currentUser.avatarClass}">${window.currentUser.initial}</div><div><strong>${window.currentUser.displayName}</strong><small>membro ativo</small></div><button class="logout-button" id="logoutButton">sair</button>`;
+      document.querySelector('#logoutButton')?.addEventListener('click', () => window.clubAuth.logout());
+      window.movieStore.loadMovies().then(rows => { if (window.movieStore.isRemote) { movies = rows.map(m => ({ ...m, group: m.group ?? m.group_score ?? '—' })); renderAll(); } });
+    });
+  </script>
+  <script>
+    document.querySelector('#sessionForm').onsubmit=e=>{e.preventDefault();const ratings=[['Pachenko','#ratingYou'],['Nefasto','#ratingNefasto'],['Shaco','#ratingShaco']].map(([name,sel])=>({name,value:document.querySelector(sel).value})).filter(x=>x.value);const avg=ratings.length?(ratings.reduce((a,x)=>a+Number(x.value),0)/ratings.length).toFixed(1):'—';const f={id:Date.now(),title:document.querySelector('#filmTitle').value,year:new Date(document.querySelector('#filmDate').value).getFullYear(),score:document.querySelector('#tmdbScore').value,group:avg,ratings:Object.fromEntries(ratings.map(x=>[x.name,x.value])),member:document.querySelector('#memberSelect').value,date:document.querySelector('#filmDate').value,poster:'',created_by:window.currentUser?.id,created_by_username:window.currentUser?.username};movies.unshift(f);chosenThisWeek=[...new Set([...chosenThisWeek,f.member])];save();renderAll();closeModal();toast('Sessão registrada com sucesso')};
+  </script>
+  <script>
+    window.__ratingMovieId = null;
+    const ratingForm = document.querySelector('#sessionForm');
+    const registerSession = ratingForm.onsubmit;
+    const ratingFieldForUser = () => window.currentUser?.displayName === 'Pachenko' ? '#ratingYou' : window.currentUser?.displayName === 'Nefasto' ? '#ratingNefasto' : '#ratingShaco';
+    ratingForm.onsubmit = event => {
+      if (!window.__ratingMovieId) return registerSession(event);
+      event.preventDefault();
+      const movie = movies.find(item => String(item.id) === String(window.__ratingMovieId));
+      const field = document.querySelector(ratingFieldForUser());
+      if (!movie || !field.value) return toast('Informe uma nota de 0 a 10');
+      movie.ratings = { ...(movie.ratings || {}), [window.currentUser.displayName]: Number(field.value) };
+      const values = Object.values(movie.ratings).map(Number).filter(Number.isFinite);
+      movie.group = (values.reduce((sum, value) => sum + value, 0) / values.length).toFixed(1);
+      window.__domingoMovies = movies; save(); window.movieStore.saveRating(movie.id, field.value);
+      window.__ratingMovieId = null; renderAll(); closeModal(); toast('Sua avaliação foi salva');
+    };
+    document.addEventListener('click', event => { if (event.target.closest('#quickAdd,#historyAdd,#featureAdd')) { window.__ratingMovieId = null; document.querySelector('#filmTitle').readOnly = false; document.querySelectorAll('.rating-fields input').forEach(input => input.disabled = input !== document.querySelector(ratingFieldForUser())); } });
+    function decorateRatingButtons() {
+      document.querySelectorAll('#historyTable tr').forEach(row => {
+        if (row.querySelector('.rate-row')) return;
+        const cells = row.querySelectorAll('td'); const titleNode = row.querySelector('.table-film span'); const movie = movies.find(item => item.title === titleNode?.firstChild?.textContent.trim());
+        if (!movie || !cells.length) return;
+        const button = document.createElement('button'); button.className = 'rate-row'; button.textContent = 'avaliar'; button.onclick = () => { window.__ratingMovieId = movie.id; openModal(movie); document.querySelector('#memberSelect').value = movie.member; document.querySelectorAll('.rating-fields input').forEach(input => input.disabled = input !== document.querySelector(ratingFieldForUser())); const field = document.querySelector(ratingFieldForUser()); field.value = movie.ratings?.[window.currentUser.displayName] || ''; document.querySelector('#filmTitle').readOnly = true; };
+        cells[cells.length - 1].append(' ', button);
+      });
+    }
+    new MutationObserver(decorateRatingButtons).observe(document.querySelector('#historyTable'), { childList: true });
+    decorateRatingButtons();
+  </script>
+</body>
+</html>
