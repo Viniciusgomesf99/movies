@@ -9,7 +9,7 @@ const demoMovies=[
  {id:8,title:'O Iluminado',year:1980,score:8.4,group:8.0,member:'Shaco',date:'2024-08-18',poster:'https://image.tmdb.org/t/p/w200/9fgh3d4h6q.jpg',overview:'Um escritor aceita um trabalho como zelador de um hotel isolado no inverno.'}
 ];
 const members=[{name:'Pachenko',initial:'P',cls:'user-avatar'},{name:'Nefasto',initial:'N',cls:'avatar-nefasto'},{name:'Shaco',initial:'S',cls:'avatar-shaco'}];
-let movies=JSON.parse(localStorage.getItem('domingoMovies')||'null')||demoMovies;let chosenThisWeek=[];let topic='classic';let apiKey=localStorage.getItem('tmdbKey')||'';
+let movies=JSON.parse(localStorage.getItem('domingoMovies')||'null')||demoMovies;let chosenThisWeek=[];let topic='classic';let apiKey=localStorage.getItem('tmdbKey')||window.TMDB_CONFIG?.apiKey||'';
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 function poster(url){return url||'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=200&q=80'}
 function fmtDate(d){if(!d)return'—';return new Date(`${d}T12:00:00`).toLocaleDateString('pt-BR',{day:'2-digit',month:'short'}).replace('.','')}
