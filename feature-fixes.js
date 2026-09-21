@@ -101,7 +101,7 @@
       const response = await fetch(`https://api.themoviedb.org/3/movie/top_rated?api_key=${apiKey}&language=pt-BR&page=1`);
       if (!response.ok) throw new Error('TMDB request failed');
       const data = await response.json();
-      const list = (data.results || []).filter(movie => movie.poster_path).slice(0, 12).map(movie => ({ id: movie.id, title: movie.title, year: movie.release_date?.slice(0, 4) || '', score: Number(movie.vote_average || 0).toFixed(1), group: '—', poster: `https://image.tmdb.org/t/p/w200${movie.poster_path}`, backdrop: movie.backdrop_path ? `https://image.tmdb.org/t/p/w780${movie.backdrop_path}` : '', overview: movie.overview || 'Sem descrição disponível.' }));
+      const list = (data.results || []).filter(movie => movie.title).map(movie => ({ id: movie.id, title: movie.title, year: movie.release_date?.slice(0, 4) || '', score: Number(movie.vote_average || 0).toFixed(1), group: '—', poster: movie.poster_path ? `https://image.tmdb.org/t/p/w200${movie.poster_path}` : '', backdrop: movie.backdrop_path ? `https://image.tmdb.org/t/p/w780${movie.backdrop_path}` : '', overview: movie.overview || 'Sem descrição disponível.' }));
       if (list.length) { renderDiscover(list); initialDiscoverLoaded = true; }
     } catch (error) {
       console.warn('TMDB initial discovery:', error.message);
@@ -123,7 +123,7 @@
       if (!peopleResponse.ok || !moviesResponse.ok) throw new Error('TMDB search failed');
       const [peopleData, moviesData] = await Promise.all([peopleResponse.json(), moviesResponse.json()]);
       const personResults = (peopleData.results || []).sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
-      const movieResultsClean = (moviesData.results || []).filter(item => item.poster_path).map(item => ({ id: item.id, title: item.title, year: item.release_date?.slice(0, 4) || '', score: Number(item.vote_average || 0).toFixed(1), poster: `https://image.tmdb.org/t/p/w200${item.poster_path}`, backdrop: item.backdrop_path ? `https://image.tmdb.org/t/p/w780${item.backdrop_path}` : '', overview: item.overview || 'Sem descricao disponivel.' }));
+      const movieResultsClean = (moviesData.results || []).filter(item => item.title).map(item => ({ id: item.id, title: item.title, year: item.release_date?.slice(0, 4) || '', score: Number(item.vote_average || 0).toFixed(1), poster: item.poster_path ? `https://image.tmdb.org/t/p/w200${item.poster_path}` : '', backdrop: item.backdrop_path ? `https://image.tmdb.org/t/p/w780${item.backdrop_path}` : '', overview: item.overview || 'Sem descricao disponivel.' }));
       const combinedSuggestions = [...personResults.map(item => ({ ...item, media_type: 'person' })), ...movieResultsClean.map(item => ({ ...item, media_type: 'movie' }))];
       return { suggestions: combinedSuggestions, people: personResults, movies: movieResultsClean };
     } catch { return { suggestions: [], movies: [] }; }
@@ -132,7 +132,7 @@
   async function personMovies(personId) {
     try {
       const creditsResponse = await fetch(`https://api.themoviedb.org/3/person/${personId}/movie_credits?api_key=${apiKey}&language=pt-BR`); const creditsData = await creditsResponse.json();
-      return (creditsData.cast || []).filter(item => item.poster_path).sort((a, b) => (b.popularity || 0) - (a.popularity || 0)).slice(0, 12).map(item => ({ id: item.id, title: item.title, year: item.release_date?.slice(0, 4) || '', score: Number(item.vote_average || 0).toFixed(1), poster: `https://image.tmdb.org/t/p/w200${item.poster_path}`, backdrop: item.backdrop_path ? `https://image.tmdb.org/t/p/w780${item.backdrop_path}` : '', overview: item.overview || 'Sem descrição disponível.' }));
+      return (creditsData.cast || []).filter(item => item.title).sort((a, b) => (b.popularity || 0) - (a.popularity || 0)).map(item => ({ id: item.id, title: item.title, year: item.release_date?.slice(0, 4) || '', score: Number(item.vote_average || 0).toFixed(1), poster: item.poster_path ? `https://image.tmdb.org/t/p/w200${item.poster_path}` : '', backdrop: item.backdrop_path ? `https://image.tmdb.org/t/p/w780${item.backdrop_path}` : '', overview: item.overview || 'Sem descrição disponível.' }));
     } catch { return []; }
   }
 
