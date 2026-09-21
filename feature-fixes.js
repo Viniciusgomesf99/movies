@@ -8,6 +8,26 @@
   const currentMonth = () => new Date().toISOString().slice(0, 7);
   const monthMovies = () => movies.filter(movie => String(movie.date || '').slice(0, 7) === currentMonth());
 
+  function showDataSkeleton() {
+    document.querySelectorAll('#totalMovies,#groupAverage,#nextChooser').forEach(node => { node.textContent = ''; node.classList.add('skeleton-text'); });
+    const recent = document.querySelector('#recentList');
+    if (recent) recent.innerHTML = Array.from({ length: 4 }, () => '<div class="data-skeleton-row"><span class="skeleton-block skeleton-thumb"></span><span class="skeleton-copy"><i class="skeleton-line"></i><i class="skeleton-line short"></i></span><i class="skeleton-score"></i></div>').join('');
+    const membersList = document.querySelector('#membersList');
+    if (membersList) membersList.innerHTML = Array.from({ length: 3 }, () => '<div class="data-skeleton-member"><span class="skeleton-avatar"></span><span class="skeleton-copy"><i class="skeleton-line"></i><i class="skeleton-line short"></i></span><i class="skeleton-member-score"></i></div>').join('');
+    const history = document.querySelector('#historyTable');
+    if (history) history.innerHTML = Array.from({ length: 5 }, () => '<tr class="data-skeleton-table"><td><span class="skeleton-table-film"><i class="skeleton-block skeleton-table-poster"></i><i class="skeleton-line"></i></span></td><td><i class="skeleton-line short"></i></td><td><i class="skeleton-line short"></i></td><td><i class="skeleton-line short"></i></td><td><i class="skeleton-line short"></i></td><td></td></tr>').join('');
+    const ranking = document.querySelector('#rankingList');
+    if (ranking) ranking.innerHTML = Array.from({ length: 3 }, () => '<div class="data-skeleton-ranking"><i class="skeleton-line tiny"></i><span class="skeleton-avatar"></span><i class="skeleton-line"></i><i class="skeleton-bar"></i><i class="skeleton-line short"></i></div>').join('');
+    const podium = document.querySelector('.ranking-hero');
+    if (podium) podium.innerHTML = '<div class="podium-skeleton"><i class="skeleton-line tiny"></i><span class="skeleton-avatar large"></span><i class="skeleton-line short"></i></div><div class="podium-skeleton featured"><i class="skeleton-line tiny"></i><span class="skeleton-avatar large"></span><i class="skeleton-line short"></i></div><div class="podium-skeleton"><i class="skeleton-line tiny"></i><span class="skeleton-avatar large"></span><i class="skeleton-line short"></i></div>';
+    document.querySelector('.sync-dot')?.replaceChildren(document.createTextNode('● sincronizando...'));
+  }
+
+  function clearDataSkeleton() {
+    document.querySelectorAll('.skeleton-text').forEach(node => node.classList.remove('skeleton-text'));
+    document.querySelector('.sync-dot')?.replaceChildren(document.createTextNode('● sincronizado'));
+  }
+
   function renderPendingRatings() {
     const view = document.querySelector('#view-overview');
     if (!view || !window.currentUser) return;
@@ -96,6 +116,14 @@
     if (!panel) { panel = document.createElement('section'); panel.id = 'discoverResultsPanel'; panel.className = 'panel discover-results-panel'; grid.insertAdjacentElement('afterend', panel); }
     return panel;
   }
+  function renderDiscoverSkeleton() {
+    const featured = document.querySelector('#featuredMovie');
+    if (featured) { featured.classList.add('discover-skeleton-feature'); featured.style.backgroundImage = 'none'; featured.innerHTML = '<div class="skeleton-feature-copy"><i class="skeleton-pill"></i><i class="skeleton-feature-title"></i><i class="skeleton-line short"></i><i class="skeleton-feature-description"></i><i class="skeleton-feature-description short"></i></div>'; }
+    const top = document.querySelector('#suggestionList');
+    if (top) top.innerHTML = Array.from({ length: 3 }, () => '<div class="news-skeleton"><i class="skeleton-block news-skeleton-poster"></i><span class="skeleton-copy"><i class="skeleton-line"></i><i class="skeleton-line short"></i></span></div>').join('');
+    const panel = ensureDiscoverResults();
+    if (panel) panel.innerHTML = '<div class="panel-heading"><div><i class="skeleton-line heading-skeleton"></i><i class="skeleton-line short"></i></div><i class="skeleton-pill count-skeleton"></i></div><div class="discover-feed discover-skeleton-feed">' + Array.from({ length: 8 }, () => '<div class="discover-card-skeleton"><i class="skeleton-block"></i><i class="skeleton-line"></i><i class="skeleton-line short"></i></div>').join('') + '</div>';
+  }
   function renderEditorialLists(list) {
     const top = document.querySelector('#suggestionList');
     const panel = ensureDiscoverResults();
@@ -121,6 +149,7 @@
     const activeList = Array.isArray(list) && list.length ? list : window.__discoverItems?.length ? window.__discoverItems : picks;
     baseDiscover(activeList);
     window.__discoverItems = activeList;
+    document.querySelector('#featuredMovie')?.classList.remove('discover-skeleton-feature');
     const featureLabel = document.querySelector('#featuredMovie .featured-copy .pill');
     if (featureLabel) featureLabel.textContent = document.querySelector('#discoverSearchContext') ? 'FILMOGRAFIA DO ATOR' : topic === 'top100' ? 'TOP 100 · MELHORES NOTAS' : 'SUGESTÃO TMDB';
     renderEditorialLists(list);
@@ -143,6 +172,7 @@
     initialDiscoverLoading = true;
     const featured = document.querySelector('#featuredMovie');
     if (featured) featured.classList.add('tmdb-loading');
+    renderDiscoverSkeleton();
     try {
       topic = categoryCatalog[0].id;
       const initialList = await fetchCategoryMovies(categoryCatalog[0]);
@@ -203,7 +233,7 @@
     const backdrop = ensureMovieDetailModal();
     const content = backdrop.querySelector('#movieDetailContent');
     backdrop.classList.add('open');
-    content.innerHTML = '<div class="movie-detail-loading">Carregando informações do filme...</div>';
+    content.innerHTML = '<div class="movie-detail-skeleton"><div class="skeleton-detail-hero"></div><div class="skeleton-detail-body"><i class="skeleton-pill"></i><i class="skeleton-detail-title"></i><i class="skeleton-line"></i><i class="skeleton-line"></i><i class="skeleton-line short"></i><div class="skeleton-detail-cast">' + Array.from({ length: 4 }, () => '<i class="skeleton-block"></i>').join('') + '</div></div></div>';
     try {
       const params = `api_key=${apiKey}&language=pt-BR`;
       const [detailsResponse, videosResponse] = await Promise.all([
@@ -230,16 +260,18 @@
   const searchInput = document.querySelector('#movieSearch');
   const searchButton = document.querySelector('#searchMovie');
   if (searchInput && searchButton) {
-    const box = searchInput.closest('.search-box'); const menu = document.createElement('div'); menu.id = 'catalogAutocomplete'; menu.className = 'catalog-autocomplete'; box.parentElement.appendChild(menu);
+    const box = searchInput.closest('.search-box'); const menu = document.createElement('div'); menu.id = 'catalogAutocomplete'; menu.className = 'catalog-autocomplete'; box.appendChild(menu);
     let timer;
+    const autocompleteSkeleton = () => '<div class="catalog-skeleton-row"><i class="skeleton-block"></i><span class="skeleton-copy"><i class="skeleton-line"></i><i class="skeleton-line short"></i></span></div>'.repeat(4);
     const decorateAutocomplete = () => { menu.querySelectorAll('button[data-person],button[data-movie]').forEach(button => { if (button.querySelector('img')) return; const kind = button.dataset.person ? 'person' : 'movie'; const image = document.createElement('img'); image.className = `catalog-result-image ${kind === 'person' ? 'person-result-image' : ''}`; image.src = window.__catalogImages?.[`${kind}:${button.dataset[kind]}`] || (kind === 'person' ? fallbackProfile : fallbackPoster); image.alt = ''; button.prepend(image); }); };
     new MutationObserver(decorateAutocomplete).observe(menu, { childList: true });
     const fillAutocomplete = async () => {
       const query = searchInput.value.trim(); clearTimeout(timer); if (query.length < 2) { menu.innerHTML = ''; return; }
-      timer = setTimeout(async () => { const data = await catalogSearch(query); const suggestions = data.suggestions.filter(item => item.media_type === 'person' || item.media_type === 'movie'); menu.innerHTML = suggestions.slice(0, 6).map(item => item.media_type === 'person' ? `<button type="button" data-person="${item.id}"><b>ator</b> ${item.name}</button>` : `<button type="button" data-movie="${item.id}"><b>filme</b> ${item.title}</button>`).join(''); menu.querySelectorAll('[data-person]').forEach(button => button.onclick = async () => { const person = data.people.find(item => String(item.id) === button.dataset.person); const list = await personMovies(button.dataset.person); setDiscoverSearchContext(person); renderDiscover(list.length ? list : picks); menu.innerHTML = ''; }); menu.querySelectorAll('[data-movie]').forEach(button => button.onclick = () => { const movie = data.movies.find(item => String(item.id) === button.dataset.movie); setDiscoverSearchContext(null); if (movie) renderDiscover([movie, ...data.movies.filter(item => item.id !== movie.id)]); menu.innerHTML = ''; }); }, 300);
+      menu.innerHTML = autocompleteSkeleton();
+      timer = setTimeout(async () => { const data = await catalogSearch(query); const suggestions = data.suggestions.filter(item => item.media_type === 'person' || item.media_type === 'movie'); menu.innerHTML = suggestions.map(item => item.media_type === 'person' ? `<button type="button" data-person="${item.id}"><b>ator</b> ${item.name}</button>` : `<button type="button" data-movie="${item.id}"><b>filme</b> ${item.title}</button>`).join(''); menu.querySelectorAll('[data-person]').forEach(button => button.onclick = async () => { const person = data.people.find(item => String(item.id) === button.dataset.person); setDiscoverSearchContext(person); renderDiscoverSkeleton(); const list = await personMovies(button.dataset.person); renderDiscover(list.length ? list : picks); menu.innerHTML = ''; }); menu.querySelectorAll('[data-movie]').forEach(button => button.onclick = () => { const movie = data.movies.find(item => String(item.id) === button.dataset.movie); setDiscoverSearchContext(null); if (movie) renderDiscover([movie, ...data.movies.filter(item => item.id !== movie.id)]); menu.innerHTML = ''; }); }, 300);
     };
     searchInput.addEventListener('input', fillAutocomplete);
-    searchButton.onclick = async () => { const data = await catalogSearch(searchInput.value.trim()); if (data.people?.length) { const person = data.people[0]; const credits = await personMovies(person.id); setDiscoverSearchContext(person); renderDiscover(credits.length ? credits : data.movies.length ? data.movies : picks); } else { setDiscoverSearchContext(null); renderDiscover(data.movies.length ? data.movies : picks); } menu.innerHTML = ''; if (!data.people?.length && !data.movies.length) toast('Nenhum filme encontrado'); };
+    searchButton.onclick = async () => { const query = searchInput.value.trim(); if (!query) return; menu.innerHTML = ''; setDiscoverSearchContext(null); renderDiscoverSkeleton(); const data = await catalogSearch(query); if (data.people?.length) { const person = data.people[0]; const credits = await personMovies(person.id); setDiscoverSearchContext(person); renderDiscover(credits.length ? credits : data.movies.length ? data.movies : picks); } else { renderDiscover(data.movies.length ? data.movies : picks); } if (!data.people?.length && !data.movies.length) toast('Nenhum filme encontrado'); };
   }
 
   const categoryCatalog = [
@@ -282,8 +314,8 @@
     setDiscoverSearchContext(null);
     const view = document.querySelector('#view-discover');
     view?.classList.add('discover-loading-state');
+    renderDiscoverSkeleton();
     const list = document.querySelector('#suggestionList');
-    if (list) list.innerHTML = '<div class="discover-loading">Carregando catálogo...</div>';
     try { const movies = await fetchCategoryMovies(category); renderDiscover(movies.length ? movies : picks); }
     catch (error) { console.warn('TMDB category:', error.message); renderDiscover(picks); toast('Não foi possível carregar esta categoria'); }
     finally { view?.classList.remove('discover-loading-state'); }
@@ -331,7 +363,9 @@
 
   const baseOpenModal = openModal;
   openModal = film => { baseOpenModal(film); document.querySelectorAll('.rating-fields input').forEach(input => { input.value = ''; }); const field = document.querySelector(personField[currentMember()] || '#ratingYou'); if (field) { field.disabled = false; field.style.display = ''; } const helper = document.querySelector('.field-help'); if (helper) helper.textContent = 'Minha nota pro filme, de 0 a 10'; };
-  document.addEventListener('auth:ready', () => { renderPendingRatings(); homeMonthlyScores(); monthlyRanking(); loadInitialDiscover(); });
+  const refreshMemberPanels = () => { renderPendingRatings(); homeMonthlyScores(); monthlyRanking(); };
+  document.addEventListener('auth:ready', () => { if (window.movieStore?.isRemote) showDataSkeleton(); else refreshMemberPanels(); loadInitialDiscover(); });
+  window.addEventListener('movies:ready', () => { clearDataSkeleton(); refreshMemberPanels(); });
   if (window.currentUser) loadInitialDiscover();
   window.addEventListener('load', () => { if (window.currentUser) loadInitialDiscover(); });
   const table = document.querySelector('#historyTable'); if (table) new MutationObserver(renderRatingChips).observe(table, { childList: true });

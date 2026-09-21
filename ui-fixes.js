@@ -135,7 +135,7 @@
       clearTimeout(searchTimer);
       const query = titleInput.value.trim();
       if (query.length < 2) { results.innerHTML = ''; return; }
-      results.innerHTML = '<span class="search-status">buscando no TMDB...</span>';
+      results.innerHTML = '<div class="film-search-skeleton"><i class="skeleton-line"></i><i class="skeleton-line short"></i><i class="skeleton-line"></i></div>';
       searchTimer = setTimeout(async () => {
         const found = await tmdbSearch(query);
         if (!found?.length) { results.innerHTML = '<span class="search-status">nenhum filme encontrado</span>'; return; }

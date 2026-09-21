@@ -76,7 +76,7 @@
       const profile = document.querySelector('.profile');
       if (profile && window.currentUser) profile.innerHTML = `<div class="avatar ${window.currentUser.avatarClass}">${window.currentUser.initial}</div><div><strong>${window.currentUser.displayName}</strong><small>membro ativo</small></div><button class="logout-button" id="logoutButton">sair</button>`;
       document.querySelector('#logoutButton')?.addEventListener('click', () => window.clubAuth.logout());
-      window.movieStore.loadMovies().then(rows => { if (window.movieStore.isRemote) { movies = rows.map(m => ({ ...m, group: m.group ?? m.group_score ?? '—' })); renderAll(); } });
+      window.movieStore.loadMovies().then(rows => { if (window.movieStore.isRemote) { movies = rows.map(m => ({ ...m, group: m.group ?? m.group_score ?? '—' })); renderAll(); } }).catch(error => console.warn('Carregamento das sessões:', error.message)).finally(() => window.dispatchEvent(new CustomEvent('movies:ready')));
     });
   </script>
   <script>
