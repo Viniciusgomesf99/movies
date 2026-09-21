@@ -105,7 +105,7 @@
         if (row.classList.contains('history-card-row') || row.querySelector('.rate-row')) return;
         const cells = row.querySelectorAll('td'); const titleNode = row.querySelector('.table-film span'); const movie = movies.find(item => item.title === titleNode?.firstChild?.textContent.trim());
         if (!movie || !cells.length) return;
-        const button = document.createElement('button'); button.className = 'rate-row'; button.textContent = 'avaliar'; button.onclick = () => { window.__ratingMovieId = movie.id; openModal(movie); document.querySelector('#memberSelect').value = movie.member; document.querySelectorAll('.rating-fields input').forEach(input => input.disabled = input !== document.querySelector(ratingFieldForUser())); const field = document.querySelector(ratingFieldForUser()); field.value = movie.ratings?.[window.currentUser.displayName] || ''; document.querySelector('#filmTitle').readOnly = true; };
+        const button = document.createElement('button'); button.className = 'rate-row'; button.textContent = 'avaliar'; button.onclick = () => window.openRatingModal?.(movie);
         cells[cells.length - 1].append(' ', button);
       });
     }

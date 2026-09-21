@@ -175,6 +175,10 @@
       event.preventDefault();
       const movie = movies.find(item => String(item.id) === String(editId));
       if (!movie) return;
+      const user = window.currentUser || {};
+      const idMatches = movie.created_by && user.id && String(movie.created_by) === String(user.id);
+      const usernameMatches = movie.created_by_username && (user.username || user.email) && String(movie.created_by_username).toLowerCase() === String(user.username || user.email).split('@')[0].toLowerCase();
+      if (!idMatches && !usernameMatches) { window.__editMovieId = null; closeModal(); return toast('Apenas quem criou a sessão pode editá-la'); }
       const selected = selectedTMDBMovie;
       Object.assign(movie, { title: selected?.title || document.querySelector('#filmTitle').value, year: selected?.year || new Date(document.querySelector('#filmDate').value).getFullYear(), score: selected?.score || document.querySelector('#tmdbScore').value, member: document.querySelector('#memberSelect').value, date: document.querySelector('#filmDate').value });
       if (selected) Object.assign(movie, { id: selected.id, poster: selected.poster, backdrop: selected.backdrop, overview: selected.overview });
@@ -199,9 +203,13 @@
       const movie = movies.find(item => item.title === titleNode?.firstChild?.textContent.trim());
       const actions = cells[cells.length - 1];
       if (!movie || !actions || actions.querySelector('.edit-row')) return;
+      const user = window.currentUser || {};
+      const idMatches = movie.created_by && user.id && String(movie.created_by) === String(user.id);
+      const usernameMatches = movie.created_by_username && (user.username || user.email) && String(movie.created_by_username).toLowerCase() === String(user.username || user.email).split('@')[0].toLowerCase();
+      if (!idMatches && !usernameMatches) return;
       const edit = document.createElement('button');
       edit.className = 'edit-row'; edit.textContent = 'editar';
-      edit.onclick = () => { window.__ratingMovieId = null; window.__editMovieId = movie.id; selectedTMDBMovie = null; openModal(movie); document.querySelector('#filmTitle').readOnly = false; document.querySelector('#memberSelect').value = movie.member; document.querySelector('#filmDate').value = movie.date || ''; document.querySelectorAll('.rating-fields input').forEach(input => input.disabled = input !== document.querySelector(ratingFieldForUser())); };
+      edit.onclick = () => { window.__ratingMovieId = null; window.__editMovieId = movie.id; selectedTMDBMovie = null; openModal(movie); document.querySelector('#filmTitle').readOnly = false; document.querySelector('#memberSelect').value = movie.member; document.querySelector('#memberDisplay').value = movie.member; document.querySelector('#filmDate').value = movie.date || ''; };
       actions.append(' ', edit);
       const remove = actions.querySelector('.delete-row');
       if (remove) { remove.textContent = 'excluir'; remove.classList.add('delete-action'); }

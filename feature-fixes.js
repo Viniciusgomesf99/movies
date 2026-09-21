@@ -2,6 +2,8 @@
   const fallbackPoster = 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=300&q=80';
   const fallbackProfile = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=160&q=80';
   const currentMember = () => { const user = window.currentUser || {}; const username = String(user.username || user.email || '').split('@')[0].toLowerCase(); const names = { pachenko: 'Pachenko', nefasto: 'Nefasto', shaco: 'Shaco' }; return user.displayName || names[username] || user.user_metadata?.display_name || 'Pachenko'; };
+  const canEditMovie = movie => { const user = window.currentUser || {}; const idMatches = movie?.created_by && user.id && String(movie.created_by) === String(user.id); const usernameMatches = movie?.created_by_username && (user.username || user.email) && String(movie.created_by_username).toLowerCase() === String(user.username || user.email).split('@')[0].toLowerCase(); return Boolean(idMatches || usernameMatches); };
+  document.querySelector('#tmdbScore')?.setAttribute('readonly', '');
   const numericRatings = movie => Object.values(movie.ratings || {}).map(Number).filter(Number.isFinite);
   const filmRating = movie => { const values = numericRatings(movie); return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null; };
   const currentMonth = () => new Date().toISOString().slice(0, 7);
@@ -98,8 +100,9 @@
     }).join('');
     table.querySelectorAll('.history-chooser').forEach((node, index) => { const movie = movies[index]; if (movie) node.textContent = `${movie.member} escolheu`; });
     table.querySelectorAll('.history-card-row').forEach((row, index) => { const movie = movies[index]; const status = row.querySelector('.rating-status'); if (!movie || !status || !Number.isFinite(Number(movie.ratings?.[currentMember()]))) return; const editRating = document.createElement('button'); editRating.type = 'button'; editRating.className = 'rating-status'; editRating.dataset.historyRate = movie.id; editRating.textContent = `editar nota · ${formatRating(movie.ratings?.[currentMember()])}`; status.replaceWith(editRating); });
+    table.querySelectorAll('[data-history-edit]').forEach(button => { const movie = movies.find(item => String(item.id) === button.dataset.historyEdit); if (!canEditMovie(movie)) button.remove(); });
     table.querySelectorAll('[data-history-rate]').forEach(button => button.onclick = () => openRatingModal(movies.find(movie => String(movie.id) === button.dataset.historyRate)));
-    table.querySelectorAll('[data-history-edit]').forEach(button => button.onclick = () => { const movie = movies.find(item => String(item.id) === button.dataset.historyEdit); if (!movie) return; window.__ratingMovieId = null; window.__editMovieId = movie.id; openModal(movie); document.querySelector('#filmTitle').readOnly = false; document.querySelector('#memberSelect').value = movie.member; document.querySelector('#memberDisplay').value = movie.member; document.querySelector('#filmDate').value = movie.date || ''; });
+    table.querySelectorAll('[data-history-edit]').forEach(button => button.onclick = () => { const movie = movies.find(item => String(item.id) === button.dataset.historyEdit); if (!movie || !canEditMovie(movie)) return; window.__ratingMovieId = null; window.__editMovieId = movie.id; openModal(movie); document.querySelector('#filmTitle').readOnly = false; document.querySelector('#memberSelect').value = movie.member; document.querySelector('#memberDisplay').value = movie.member; document.querySelector('#filmDate').value = movie.date || ''; });
     table.querySelectorAll('.delete-row').forEach(button => button.onclick = () => { movies = movies.filter(movie => String(movie.id) !== String(button.dataset.id)); save(); renderAll(); toast('Sessão removida do histórico'); });
   }
 
